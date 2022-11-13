@@ -7,7 +7,7 @@ const DISCONTINUED_CATEGORIES = ["E6BBDSBEAJJJKILQH2WQAFU6"];
 interface Item {
   id: string,
   item: CatalogItem,
-  image: CatalogImage | null,
+  image: CatalogImage,
 }
 
 const priceFormatter = new Intl.NumberFormat('en-GB', {
@@ -27,6 +27,18 @@ function getItemImage(item: CatalogItem, images: Map<string, CatalogObject>): Ca
     return images.get(imageId)?.imageData ?? null;
 }
 
+/**
+* An item is only valid if:
+*  - It has a category 
+*  - It is not in a discontinued category
+*/
+function isValidItem(object: CatalogObject) {
+    return (
+      object.itemData!.categoryId != null 
+      && !DISCONTINUED_CATEGORIES.includes(object.itemData!.categoryId)
+    );
+}
+
 async function fetchCatalogItems(): Promise<Item[]> {
   const client = new Client({
     accessToken: process.env.SQUARE_ACCESS_TOKEN,
@@ -41,7 +53,7 @@ async function fetchCatalogItems(): Promise<Item[]> {
   const { images, items }: CatalogData = objects.reduce((data, object) => {
     if (object.type === "IMAGE") data.images.set(object.id, object)
     else if (object.type === "ITEM") {
-        if (object.itemData!.categoryId != null && !DISCONTINUED_CATEGORIES.includes(object.itemData!.categoryId)) {
+        if (isValidItem(object)) {
           data.items.push(object);
         }
     }
@@ -51,35 +63,37 @@ async function fetchCatalogItems(): Promise<Item[]> {
 
   return items.map(item => {
       const itemData = item.itemData!;
+      const image = getItemImage(item.itemData!, images);
       return {
           id: item.id,
           item: itemData,
-          image: getItemImage(itemData, images),
+          image: image!,
       } 
   });
 }
 
 function ItemCard(props: { item: Item }) {
   const { item } = props;
-  return (<div className="w-full max-w-sm rounded-lg shadow-md">
-    {
-      item.image?.url != null && <div>
-        <Image className="p-8 rounded-t-lg" src={item.image!.url!} alt="product image" height={250} width={250}/>
-      </div>
-    }
-    <div className="px-5 pb-5">
-        <h5 className="text-xl font-semibold tracking-tight text-gray-900">{item.item.name}</h5>
-        <div className="flex justify-between items-center">
-            <span className="text-3xl font-bold text-gray-900">{getFormattedPrice(item.item)}</span>
+  return (
+    <div className="w-full relative">
+      {
+        item.image?.url != null && <div>
+          <Image className="rounded-t-lg" src={item.image!.url!} alt="product image" height={250} width={250}/>
         </div>
+      }
+      <div className="absolute top-0 bg-blue-500 text-white p-2 rounded text-3xl">
+          <div className="flex justify-between items-center">
+              {getFormattedPrice(item.item)}
+          </div>
+      </div>
     </div>
-  </div>);
+  );
 }
 
 export default async function Page() {
   const items = await fetchCatalogItems();
   return <div className='h-screen'>
-    <div className="grid grid-cols-5 auto-cols-max">
+    <div className="grid grid-cols-1 sm:grid-cols-6 auto-cols-max">
       { items.map(item => {
           return <ItemCard key={item.id} item={item}/>;
       }) }
