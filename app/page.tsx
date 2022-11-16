@@ -73,7 +73,7 @@ function ItemCard(props: { item: Item }) {
           <Image className="rounded-t-lg" src={item.image!.url!} alt="product image" height={250} width={250} />
         </div>
       }
-      <div className="absolute top-0 bg-blue-500 text-white p-2 rounded text-3xl">
+      <div className="absolute top-0 bg-blue-500 text-white p-2 rounded text-2xl">
         <div className="flex justify-between items-center">
           {getFormattedPrice(item.item)}
         </div>
@@ -82,20 +82,28 @@ function ItemCard(props: { item: Item }) {
   );
 }
 
+function ItemCategorySet(props: { items: Item[], name: string }) {
+  const { items, name } = props;
+  return (
+    <div>
+      <h2 className="text-3xl font-bold text-center">{name}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-6 auto-cols-max">
+        {items.map(item => {
+          return <ItemCard key={item.id} item={item} />;
+        })}
+      </div>
+    </div>
+  );
+}
+
+
 export default async function Page() {
   const snackItems = await fetchCatalogItems(SNACKS_CATEGORY);
   const drinkItems = await fetchCatalogItems(DRINKS_CATEGORY);
   return <div className='h-screen'>
     <div className='flex'>
-      <div className="grid grid-cols-1 sm:grid-cols-6 auto-cols-max">
-        {snackItems.map(item => {
-          return <ItemCard key={item.id} item={item} />;
-        })}
-      </div><div className="grid grid-cols-1 sm:grid-cols-6 auto-cols-max">
-        {drinkItems.map(item => {
-          return <ItemCard key={item.id} item={item} />;
-        })}
-      </div>
+      <ItemCategorySet name="Snacks" items={snackItems} />
+      <ItemCategorySet name="Soft Drinks" items={drinkItems} />
     </div>
   </div>;
 }
