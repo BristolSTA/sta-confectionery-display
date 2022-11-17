@@ -5,6 +5,8 @@ import Image from "next/image";
 const DRINKS_CATEGORY = "HKY5KICRT6OKZB6MC2CTWVW6";
 const SNACKS_CATEGORY = "N726HTMVPHM5YZTYZMWJSO3Z"
 
+const LOCATION_ID = "L5585J5KDY9YH";
+
 interface Item {
   id: string,
   item: CatalogItem,
@@ -40,6 +42,7 @@ async function fetchCatalogItems(categoryId: string): Promise<Item[]> {
     environment: Environment.Production,
   });
 
+  // Load item catelog updates, including related objects, to obtain items and images
   const listLocationsResponse = await client.catalogApi.searchCatalogObjects({
     objectTypes: ["ITEM"],
     query: {
@@ -50,14 +53,22 @@ async function fetchCatalogItems(categoryId: string): Promise<Item[]> {
     },
     includeRelatedObjects: true
   });
+
+
   const items = listLocationsResponse.result.objects ?? [];
   const relatedObjects = listLocationsResponse.result.relatedObjects ?? [];
-
-
   const images = relatedObjects.filter(object => object.type == "IMAGE")
 
+  // Load stock counts
+  const inventoryResponse = await client.inventoryApi.batchRetrieveInventoryCounts({
+    catalogObjectIds: items.map(item => item.itemData?.variations?.[0].id).filter(item => item !== undefined) as string[],
+    locationIds: [LOCATION_ID]
+  })
+  const itemsInStock = inventoryResponse.result.counts ? inventoryResponse.result.counts.filter(count => count.quantity && count.quantity !== "0").map(count => count.catalogObjectId) : []
+  const availableItems = items.filter(item => itemsInStock.includes(item.itemData?.variations?.[0].id))
+
   // Sort items by name alphabetically, and then into ascending price order
-  items.sort((a, b) => {
+  availableItems.sort((a, b) => {
     return (a.itemData?.name ?? '').localeCompare(b.itemData?.name ?? '')
   }).sort((a, b) => {
     let aValue = 0;
@@ -69,9 +80,7 @@ async function fetchCatalogItems(categoryId: string): Promise<Item[]> {
     return aValue - bValue
   })
 
-
-
-  return items.map(item => {
+  return availableItems.map(item => {
     const itemData = item.itemData!;
     const image = getItemImage(item.itemData!, images);
     return {
@@ -88,10 +97,10 @@ function ItemCard(props: { item: Item }) {
     <div className="w-full relative">
       {
         item.image?.url != null && <div>
-          <Image className="rounded-t-lg" src={item.image!.url!} alt="product image" height={250} width={250} />
+          <Image className="rounded-lg" src={item.image!.url!} alt="product image" height={250} width={250} />
         </div>
       }
-      <div className="absolute top-0 bg-blue-500 text-white p-2 rounded text-2xl">
+      <div className="absolute top-0 bg-blue-500 text-white p-2 rounded-br rounded-tl text-2xl">
         <div className="flex justify-between items-center">
           {getFormattedPrice(item.item)}
         </div>
@@ -118,7 +127,7 @@ function ItemCategorySet(props: { items: Item[], name: string }) {
 export default async function Page() {
   const snackItems = await fetchCatalogItems(SNACKS_CATEGORY);
   const drinkItems = await fetchCatalogItems(DRINKS_CATEGORY);
-  return <div className='h-screen bg-gray-700'>
+  return <div className='h-screen bg-gray-700 cursor-none'>
     <div className='flex gap-x-10 px-10'>
       <ItemCategorySet name="Snacks" items={snackItems} />
       <ItemCategorySet name="Soft Drinks" items={drinkItems} />
