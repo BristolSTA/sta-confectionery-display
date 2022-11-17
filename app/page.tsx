@@ -16,8 +16,12 @@ const priceFormatter = new Intl.NumberFormat('en-GB', {
   currency: 'GBP',
 });
 
+function getPrice(item: CatalogItem): number | null {
+  return Number(item.variations?.[0].itemVariationData?.priceMoney?.amount)
+}
+
 function getFormattedPrice(item: CatalogItem): string | null {
-  const price = Number(item.variations?.[0].itemVariationData?.priceMoney?.amount);
+  const price = getPrice(item);
   if (price == null) return null;
   if (price < 100) return `${price}p`
   if (price % 100 == 0) return `£${price / 100}`
@@ -51,6 +55,20 @@ async function fetchCatalogItems(categoryId: string): Promise<Item[]> {
 
 
   const images = relatedObjects.filter(object => object.type == "IMAGE")
+
+  // Sort items by name alphabetically, and then into ascending price order
+  items.sort((a, b) => {
+    return (a.itemData?.name ?? '').localeCompare(b.itemData?.name ?? '')
+  }).sort((a, b) => {
+    let aValue = 0;
+    let bValue = 0;
+
+    if (a.itemData) aValue = getPrice(a.itemData) ?? 0
+    if (b.itemData) bValue = getPrice(b.itemData) ?? 0
+
+    return aValue - bValue
+  })
+
 
 
   return items.map(item => {
@@ -86,8 +104,8 @@ function ItemCategorySet(props: { items: Item[], name: string }) {
   const { items, name } = props;
   return (
     <div>
-      <h2 className="text-3xl font-bold text-center">{name}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-6 auto-cols-max">
+      <h2 className="text-6xl font-bold text-center mb-5 text-white">{name}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 auto-cols-max">
         {items.map(item => {
           return <ItemCard key={item.id} item={item} />;
         })}
@@ -100,8 +118,8 @@ function ItemCategorySet(props: { items: Item[], name: string }) {
 export default async function Page() {
   const snackItems = await fetchCatalogItems(SNACKS_CATEGORY);
   const drinkItems = await fetchCatalogItems(DRINKS_CATEGORY);
-  return <div className='h-screen'>
-    <div className='flex'>
+  return <div className='h-screen bg-gray-700'>
+    <div className='flex gap-x-10 px-10'>
       <ItemCategorySet name="Snacks" items={snackItems} />
       <ItemCategorySet name="Soft Drinks" items={drinkItems} />
     </div>
