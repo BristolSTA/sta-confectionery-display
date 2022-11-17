@@ -114,7 +114,7 @@ function ItemCategorySet(props: { items: Item[], name: string }) {
   return (
     <div>
       <h2 className="text-6xl font-bold text-center mb-5 text-white">{name}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 auto-cols-max">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 auto-cols-max">
         {items.map(item => {
           return <ItemCard key={item.id} item={item} />;
         })}
