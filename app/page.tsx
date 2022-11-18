@@ -94,10 +94,10 @@ async function fetchCatalogItems(categoryId: string): Promise<Item[]> {
 function ItemCard(props: { item: Item }) {
   const { item } = props;
   return (
-    <div className="w-full relative">
+    <div className="relative shrink">
       {
         item.image?.url != null && <div>
-          <Image className="rounded-lg" src={item.image!.url!} alt="product image" height={250} width={250} />
+          <Image className="rounded-lg" src={item.image!.url!} alt="product image" width={500} height={500} />
         </div>
       }
       <div className="absolute top-0 bg-blue-500 text-white p-2 rounded-br rounded-tl text-4xl font-bold">
@@ -112,14 +112,16 @@ function ItemCard(props: { item: Item }) {
 function ItemCategorySet(props: { items: Item[], name: string }) {
   const { items, name } = props;
   return (
-    <div>
-      <h2 className="text-6xl font-bold text-center mb-5 text-white">{name}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 auto-cols-max">
-        {items.map(item => {
-          return <ItemCard key={item.id} item={item} />;
-        })}
+    <div className="flex flex-col gap-5">
+      <h2 className="text-6xl font-bold text-center text-white flex-initial">{name}</h2>
+      <div className="flex-1">
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-3 h-full max-h-full">
+          {items.map(item => {
+            return <ItemCard key={item.id} item={item} />;
+          })}
+        </div>
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -127,7 +129,7 @@ function ItemCategorySet(props: { items: Item[], name: string }) {
 export default async function Page() {
   const snackItems = await fetchCatalogItems(SNACKS_CATEGORY);
   const drinkItems = await fetchCatalogItems(DRINKS_CATEGORY);
-  return <div className='h-screen w-screen overflow-hidden bg-gray-700 flex gap-x-10 px-10 justify-evenly'>
+  return <div className='h-screen overflow-y-hidden w-full bg-gray-700 flex gap-x-10 p-10 justify-evenly'>
     <ItemCategorySet name="Snacks" items={snackItems} />
     <ItemCategorySet name="Soft Drinks" items={drinkItems} />
   </div>;
