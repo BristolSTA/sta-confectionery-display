@@ -100,7 +100,7 @@ function ItemCard(props: { item: Item }) {
           <Image className="rounded-lg" src={item.image!.url!} alt="product image" height={250} width={250} />
         </div>
       }
-      <div className="absolute top-0 bg-blue-500 text-white p-2 rounded-br rounded-tl text-2xl">
+      <div className="absolute top-0 bg-blue-500 text-white p-2 rounded-br rounded-tl text-4xl font-bold">
         <div className="flex justify-between items-center">
           {getFormattedPrice(item.item)}
         </div>
@@ -127,10 +127,8 @@ function ItemCategorySet(props: { items: Item[], name: string }) {
 export default async function Page() {
   const snackItems = await fetchCatalogItems(SNACKS_CATEGORY);
   const drinkItems = await fetchCatalogItems(DRINKS_CATEGORY);
-  return <div className='h-screen bg-gray-700 cursor-none'>
-    <div className='flex gap-x-10 px-10'>
-      <ItemCategorySet name="Snacks" items={snackItems} />
-      <ItemCategorySet name="Soft Drinks" items={drinkItems} />
-    </div>
+  return <div className='h-screen w-screen overflow-hidden bg-gray-700 flex gap-x-10 px-10 justify-evenly'>
+    <ItemCategorySet name="Snacks" items={snackItems} />
+    <ItemCategorySet name="Soft Drinks" items={drinkItems} />
   </div>;
 }
